@@ -15,6 +15,9 @@ public class ApplicationContext {
 
         // 解析配置，创建 Bean定义对象
         // 获取配置类的 @ComponentScan 信息
+        if (!clazz.isAnnotationPresent(ComponentScan.class)) {
+            throw new IllegalArgumentException("Config class should add @ComponentScan.");
+        }
         String basePackageName = clazz.getDeclaredAnnotation(ComponentScan.class).packageName();
         // 扫描包下的类，拿到 @Component 的对象
         ClassLoader classLoader = clazz.getClassLoader();
@@ -30,29 +33,30 @@ public class ApplicationContext {
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
-        if (dirPath.toFile().isDirectory()) {
-            for (File file : Objects.requireNonNull(dirPath.toFile().listFiles())) {
-                String absolutePath = file.getAbsolutePath();
-                if (!absolutePath.endsWith(".class")) {
-                    continue;
-                }
-                String basePath = classPathDirPath.toFile().getAbsolutePath();
-                String clazzName = absolutePath.substring(
-                        absolutePath.indexOf(basePath)
-                                + basePath.length() + 1,
-                        absolutePath.lastIndexOf('.'))
-                        .replace(File.separatorChar, '.');
-                Class<?> loadClass;
-                try {
-                    loadClass = classLoader.loadClass(clazzName);
-                } catch (ClassNotFoundException e) {
-                    throw new RuntimeException(e);
-                }
+        if (dirPath.toFile().isFile()) {
+            return;
+        }
+        for (File file : Objects.requireNonNull(dirPath.toFile().listFiles())) {
+            String absolutePath = file.getAbsolutePath();
+            if (!absolutePath.endsWith(".class")) {
+                continue;
+            }
+            String basePath = classPathDirPath.toFile().getAbsolutePath();
+            String clazzName = absolutePath.substring(
+                            absolutePath.indexOf(basePath)
+                                    + basePath.length() + 1,
+                            absolutePath.lastIndexOf('.'))
+                    .replace(File.separatorChar, '.');
+            Class<?> loadClass;
+            try {
+                loadClass = classLoader.loadClass(clazzName);
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
 
-                if (loadClass.isAnnotationPresent(Component.class)) {
-                    Component component = loadClass.getDeclaredAnnotation(Component.class);
-                    System.out.println(component.beanName());
-                }
+            if (loadClass.isAnnotationPresent(Component.class)) {
+                Component component = loadClass.getDeclaredAnnotation(Component.class);
+                System.out.println(component.beanName());
             }
         }
 
