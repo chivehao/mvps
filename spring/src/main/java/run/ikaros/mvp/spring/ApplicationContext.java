@@ -5,10 +5,16 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ApplicationContext {
     private final Class<?> clazz;
+    /**
+     * 单例Bean缓存，也称为一级缓存，作用是存储单例Bean对象，和有效解决循环依赖的问题。
+     */
+    private final static Map<String, Object> singletonBeanMap = new ConcurrentHashMap<>();
 
     public ApplicationContext(Class<?> clazz) {
         this.clazz = clazz;
