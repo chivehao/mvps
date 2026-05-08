@@ -54,10 +54,11 @@ public class ApplicationContext {
                 throw new RuntimeException(e);
             }
 
-            if (loadClass.isAnnotationPresent(Component.class)) {
-                Component component = loadClass.getDeclaredAnnotation(Component.class);
-                System.out.println(component.beanName());
+            if (!loadClass.isAnnotationPresent(Component.class)) {
+               continue;
             }
+            Component component = loadClass.getDeclaredAnnotation(Component.class);
+            System.out.println(component.beanName());
         }
 
     }
