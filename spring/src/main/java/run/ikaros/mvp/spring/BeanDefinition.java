@@ -1,17 +1,9 @@
 package run.ikaros.mvp.spring;
 
 public class BeanDefinition {
-    private String beanName;
     private Class<?> clazz;
     private String scope;
 
-    public String getBeanName() {
-        return beanName;
-    }
-
-    public void setBeanName(String beanName) {
-        this.beanName = beanName;
-    }
 
     public Class<?> getClazz() {
         return clazz;

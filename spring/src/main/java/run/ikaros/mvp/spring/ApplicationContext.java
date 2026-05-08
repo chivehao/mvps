@@ -76,10 +76,9 @@ public class ApplicationContext {
                 }
             }
             BeanDefinition beanDefinition = new BeanDefinition();
-            beanDefinition.setBeanName(component.beanName());
             beanDefinition.setClazz(loadClass);
             beanDefinition.setScope(isPrototype ? "prototype" : "singleton");
-            beanDefinitionMap.putIfAbsent(beanDefinition.getBeanName(), beanDefinition);
+            beanDefinitionMap.putIfAbsent(component.beanName(), beanDefinition);
         }
         beanDefinitionMap.keySet().forEach(System.out::println);
 
