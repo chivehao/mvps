@@ -8,7 +8,7 @@ public class SpringExampleApplication {
         ApplicationContext applicationContext = new ApplicationContext(ApplicationConfig.class);
 
         UserService userService = (UserService) applicationContext.getBean("userService");
-        //String username = userService.getUsername();
-//        System.out.println("hello " + username);
+        String username = userService.getUsername();
+        System.out.println("hello " + username);
     }
 }

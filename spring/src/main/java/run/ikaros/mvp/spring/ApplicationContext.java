@@ -1,6 +1,8 @@
 package run.ikaros.mvp.spring;
 
 import java.io.File;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
@@ -85,6 +87,33 @@ public class ApplicationContext {
     }
 
     public Object getBean(String beanName) {
-        return null;
+        if (!beanDefinitionMap.containsKey(beanName)) {
+            throw new BeanDefinitionNotExistsException(beanName);
+        }
+
+        // 双重校验锁，平衡单例模式并发性能
+        if (singletonBeanMap.containsKey(beanName)) {
+            return singletonBeanMap.get(beanName);
+        }
+        synchronized (singletonBeanMap) {
+            if (singletonBeanMap.containsKey(beanName)) {
+                return singletonBeanMap.get(beanName);
+            }
+            // 不存在，则根据Bean定义，反射创建Bean对象，并放入单例对象池。
+            BeanDefinition beanDefinition = beanDefinitionMap.get(beanName);
+            Class<?> clazz = beanDefinition.getClazz();
+            Constructor<?> constructor;
+            Object beanObj;
+            try {
+                constructor = clazz.getDeclaredConstructor(null);
+                beanObj = constructor.newInstance();
+            } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
+                     NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            }
+            singletonBeanMap.putIfAbsent(beanName, beanObj);
+        }
+
+        return singletonBeanMap.get(beanName);
     }
 }
