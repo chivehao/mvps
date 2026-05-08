@@ -12,6 +12,10 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ApplicationContext {
     private final Class<?> clazz;
     /**
+     * Bean定义对象的存储Map.
+     */
+    private final static Map<String, BeanDefinition> beanDefinitionMap = new ConcurrentHashMap<>();
+    /**
      * 单例Bean缓存，也称为一级缓存，作用是存储单例Bean对象，和有效解决循环依赖的问题。
      */
     private final static Map<String, Object> singletonBeanMap = new ConcurrentHashMap<>();
@@ -64,8 +68,20 @@ public class ApplicationContext {
                continue;
             }
             Component component = loadClass.getDeclaredAnnotation(Component.class);
-            System.out.println(component.beanName());
+            boolean isPrototype = false;
+            if (loadClass.isAnnotationPresent(Scope.class)) {
+                Scope scope = loadClass.getDeclaredAnnotation(Scope.class);
+                if ("prototype".equalsIgnoreCase(scope.value())) {
+                    isPrototype = true;
+                }
+            }
+            BeanDefinition beanDefinition = new BeanDefinition();
+            beanDefinition.setBeanName(component.beanName());
+            beanDefinition.setClazz(loadClass);
+            beanDefinition.setScope(isPrototype ? "prototype" : "singleton");
+            beanDefinitionMap.putIfAbsent(beanDefinition.getBeanName(), beanDefinition);
         }
+        beanDefinitionMap.keySet().forEach(System.out::println);
 
     }
 
