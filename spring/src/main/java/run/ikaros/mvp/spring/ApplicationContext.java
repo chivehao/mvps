@@ -27,6 +27,10 @@ public class ApplicationContext {
     public ApplicationContext(Class<?> clazz) {
         this.clazz = clazz;
 
+        scan(clazz);
+    }
+
+    private static void scan(Class<?> clazz) {
         // 解析配置，创建 Bean定义对象
         // 获取配置类的 @ComponentScan 信息
         if (!clazz.isAnnotationPresent(ComponentScan.class)) {
@@ -84,7 +88,6 @@ public class ApplicationContext {
             beanDefinition.setScope(isPrototype ? "prototype" : "singleton");
             beanDefinitionMap.putIfAbsent(component.beanName(), beanDefinition);
         }
-
     }
 
     public Object getBean(String beanName) {
@@ -136,7 +139,7 @@ public class ApplicationContext {
 
         //初始化相关，如特定的接口
         for (Class<?> clsInterface : cls.getInterfaces()) {
-            if (clsInterface == BeanNameAware.class) {
+            if (BeanNameAware.class.isAssignableFrom(clsInterface)) {
                 Method setBeanNameMethod;
                 try {
                     setBeanNameMethod = clsInterface.getDeclaredMethod("setBeanName", String.class);
@@ -146,7 +149,7 @@ public class ApplicationContext {
                     throw new RuntimeException(e);
                 }
             }
-            if (clsInterface == InitializingBean.class) {
+            if (InitializingBean.class.isAssignableFrom(clsInterface)) {
                 Method afterPropertiesSet;
                 try {
                     afterPropertiesSet = clsInterface.getDeclaredMethod("afterPropertiesSet");
