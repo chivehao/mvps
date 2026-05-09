@@ -83,7 +83,8 @@ public class ApplicationContext {
                continue;
             }
 
-            // 后置处理器直接反射实例化放到列表里去
+            // 后置处理器直接反射实例化放到列表里去，
+            // 需要注意的是Spring里面BeanPostProcessor并不是反射直接创建，也是交给ioc容器管理的。
             if (BeanPostProcessor.class.isAssignableFrom(loadClass)) {
                 try {
                     Constructor<?> constructor = loadClass.getDeclaredConstructor();
