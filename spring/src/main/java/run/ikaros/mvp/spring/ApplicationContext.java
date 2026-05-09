@@ -152,10 +152,7 @@ public class ApplicationContext {
                 return singletonBean;
             }
 
-            Object beanObj = createBean(beanName, beanDefinition);
-            singletonBeanMap.putIfAbsent(beanName, beanObj);
-            earlyBeanMap.remove(beanName);
-            return beanObj;
+            return createBean(beanName, beanDefinition);
         }
     }
 
@@ -218,6 +215,8 @@ public class ApplicationContext {
             beanPostProcessor.postProcessAfterInitialization(instance, beanName);
         }
 
+        singletonBeanMap.putIfAbsent(beanName, instance);
+        earlyBeanMap.remove(beanName);
         return instance;
     }
 
