@@ -136,10 +136,10 @@ public class ApplicationContext {
     }
 
     private Object createBean(String beanName, BeanDefinition beanDefinition) {
-        // 实例化
+        // 实例化 Bean
         Object instance = createBeanInstanceWithReflect(beanDefinition);
 
-        // IOC相关，依赖注入
+        // 设置属性，IOC相关，依赖注入
         Class<?> cls = beanDefinition.getClazz();
         for (Field field : cls.getDeclaredFields()) {
             if (!field.isAnnotationPresent(Autowired.class)) {
@@ -169,7 +169,7 @@ public class ApplicationContext {
             }
         }
 
-        //实例化之后，初始化之前操作
+        //实例化之后，初始化之前操作，BeanPostProcessor 前置处理。
         for (BeanPostProcessor beanPostProcessor : beanPostProcessorList) {
             beanPostProcessor.postProcessBeforeInitialization(instance, beanName);
         }
@@ -187,7 +187,8 @@ public class ApplicationContext {
         }
 
 
-        //实例化之后，初始化之后操作
+
+        //实例化之后，初始化之后操作，BeanPostProcessor 后置处理。
         for (BeanPostProcessor beanPostProcessor : beanPostProcessorList) {
             beanPostProcessor.postProcessAfterInitialization(instance, beanName);
         }
