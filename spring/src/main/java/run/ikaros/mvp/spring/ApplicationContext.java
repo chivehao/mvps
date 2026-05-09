@@ -4,6 +4,7 @@ import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
@@ -94,7 +95,7 @@ public class ApplicationContext {
 
         // 原型模式，直接新建Bean返回
         if ("prototype".equalsIgnoreCase(beanDefinition.getScope())) {
-            return createBean(beanDefinition);
+            return createBean(beanName, beanDefinition);
         }
 
         // 双重校验锁，平衡单例模式并发性能
@@ -105,13 +106,13 @@ public class ApplicationContext {
             if (singletonBeanMap.containsKey(beanName)) {
                 return singletonBeanMap.get(beanName);
             }
-            Object beanObj = createBean(beanDefinition);
+            Object beanObj = createBean(beanName, beanDefinition);
             singletonBeanMap.putIfAbsent(beanName, beanObj);
             return beanObj;
         }
     }
 
-    private Object createBean(BeanDefinition beanDefinition) {
+    private Object createBean(String beanName, BeanDefinition beanDefinition) {
         // 实例化
         Object instance = createBeanInstanceWithReflect(beanDefinition);
 
@@ -130,6 +131,21 @@ public class ApplicationContext {
                 throw new RuntimeException(e);
             } finally {
                 field.setAccessible(false);
+            }
+        }
+
+        // 特定的接口
+        for (Class<?> clsInterface : cls.getInterfaces()) {
+            if (clsInterface != BeanNameAware.class) {
+                continue;
+            }
+            Method setBeanNameMethod;
+            try {
+                setBeanNameMethod = clsInterface.getDeclaredMethod("setBeanName", String.class);
+                setBeanNameMethod.setAccessible(true);
+                setBeanNameMethod.invoke(instance, beanName);
+            } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+                throw new RuntimeException(e);
             }
         }
 

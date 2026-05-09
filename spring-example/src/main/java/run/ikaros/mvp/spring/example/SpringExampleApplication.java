@@ -1,6 +1,7 @@
 package run.ikaros.mvp.spring.example;
 
 import run.ikaros.mvp.spring.ApplicationContext;
+import run.ikaros.mvp.spring.example.service.OrderService;
 import run.ikaros.mvp.spring.example.service.UserService;
 
 public class SpringExampleApplication {
@@ -12,5 +13,9 @@ public class SpringExampleApplication {
          System.out.println("hello " + username);
         String orderId = userService.getOrderId();
         System.out.println("user orderId: " + orderId);
+
+        OrderService orderService = (OrderService) applicationContext.getBean("orderService");
+        String beanName = orderService.getBeanName();
+        System.out.println("orderServer beanName: " + beanName);
     }
 }
