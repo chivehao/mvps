@@ -116,7 +116,7 @@ public class ApplicationContext {
         // 实例化
         Object instance = createBeanInstanceWithReflect(beanDefinition);
 
-        // 依赖注入
+        // IOC相关，依赖注入
         Class<?> cls = beanDefinition.getClazz();
         for (Field field : cls.getDeclaredFields()) {
             if (!field.isAnnotationPresent(Autowired.class)) {
@@ -134,7 +134,7 @@ public class ApplicationContext {
             }
         }
 
-        // 特定的接口
+        //初始化相关，如特定的接口
         for (Class<?> clsInterface : cls.getInterfaces()) {
             if (clsInterface == BeanNameAware.class) {
                 Method setBeanNameMethod;
