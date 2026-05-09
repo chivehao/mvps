@@ -115,6 +115,21 @@ public class ApplicationContext {
         }
     }
 
+    private Object getSingletonBean(String beanName) {
+        if (singletonBeanMap.containsKey(beanName)) {
+            return singletonBeanMap.get(beanName);
+        }
+
+        synchronized (earlyBeanMap) {
+            if (earlyBeanMap.containsKey(beanName)) {
+                return earlyBeanMap.get(beanName);
+            }
+        }
+
+
+        return null;
+    }
+
     public Object getBean(String beanName) {
         if (!beanDefinitionMap.containsKey(beanName)) {
             throw new BeanDefinitionNotExistsException(beanName);
@@ -127,16 +142,16 @@ public class ApplicationContext {
         }
 
         // 使用单例模式的双重校验锁，解决并发访问的线程安全问题。
-        if (singletonBeanMap.containsKey(beanName)) {
-            return singletonBeanMap.get(beanName);
+        Object singletonBean = getSingletonBean(beanName);
+        if (singletonBean != null) {
+            return singletonBean;
         }
-        synchronized (singletonBeanMap) {
-            if (singletonBeanMap.containsKey(beanName)) {
-                return singletonBeanMap.get(beanName);
+        synchronized (earlyBeanMap) {
+            singletonBean = getSingletonBean(beanName);
+            if (singletonBean != null) {
+                return singletonBean;
             }
-            if (earlyBeanMap.containsKey(beanName)) {
-                return earlyBeanMap.get(beanName);
-            }
+
             Object beanObj = createBean(beanName, beanDefinition);
             singletonBeanMap.putIfAbsent(beanName, beanObj);
             earlyBeanMap.remove(beanName);
