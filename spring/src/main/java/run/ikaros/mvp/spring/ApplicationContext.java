@@ -2,6 +2,7 @@ package run.ikaros.mvp.spring;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -93,7 +94,7 @@ public class ApplicationContext {
 
         // 原型模式，直接新建Bean返回
         if ("prototype".equalsIgnoreCase(beanDefinition.getScope())) {
-            return createBeanInstanceWithReflect(beanDefinition);
+            return createBean(beanDefinition);
         }
 
         // 双重校验锁，平衡单例模式并发性能
@@ -104,10 +105,35 @@ public class ApplicationContext {
             if (singletonBeanMap.containsKey(beanName)) {
                 return singletonBeanMap.get(beanName);
             }
-            Object beanObj = createBeanInstanceWithReflect(beanDefinition);
+            Object beanObj = createBean(beanDefinition);
             singletonBeanMap.putIfAbsent(beanName, beanObj);
             return beanObj;
         }
+    }
+
+    private Object createBean(BeanDefinition beanDefinition) {
+        // 实例化
+        Object instance = createBeanInstanceWithReflect(beanDefinition);
+
+        // 依赖注入
+        Class<?> cls = beanDefinition.getClazz();
+        for (Field field : cls.getDeclaredFields()) {
+            if (!field.isAnnotationPresent(Autowired.class)) {
+                continue;
+            }
+            try {
+                field.setAccessible(true);
+                String fieldName = field.getName();
+                Object fieldValue = getBean(fieldName);
+                field.set(instance, fieldValue);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            } finally {
+                field.setAccessible(false);
+            }
+        }
+
+        return instance;
     }
 
     private static Object createBeanInstanceWithReflect(BeanDefinition beanDefinition) {

@@ -10,5 +10,7 @@ public class SpringExampleApplication {
         UserService userService = (UserService) applicationContext.getBean("userService");
          String username = userService.getUsername();
          System.out.println("hello " + username);
+        String orderId = userService.getOrderId();
+        System.out.println("user orderId: " + orderId);
     }
 }
