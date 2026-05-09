@@ -22,9 +22,13 @@ public class ApplicationContext {
      */
     private final static Map<String, BeanDefinition> beanDefinitionMap = new ConcurrentHashMap<>();
     /**
-     * 单例Bean缓存，也称为一级缓存，作用是存储单例Bean对象，和有效解决循环依赖的问题。
+     * 单例Bean缓存，一级缓存，作用是存储单例Bean对象，和有效解决循环依赖的问题。
      */
     private final static Map<String, Object> singletonBeanMap = new ConcurrentHashMap<>();
+    /**
+     * 早期临时Bean缓存，二级缓存，存储实例化但未初始化完毕的早期临时Bean对象，注意用于给循环依赖提供出口，解决循环依赖的问题。
+     */
+    private final static Map<String, Object> earlyBeanMap = new ConcurrentHashMap<>();
 
     /**
      * Bean的后置处理器列表。
@@ -122,7 +126,7 @@ public class ApplicationContext {
             return createBean(beanName, beanDefinition);
         }
 
-        // 双重校验锁，平衡单例模式并发性能
+        // 使用单例模式的双重校验锁，解决并发访问的线程安全问题。
         if (singletonBeanMap.containsKey(beanName)) {
             return singletonBeanMap.get(beanName);
         }
@@ -130,8 +134,12 @@ public class ApplicationContext {
             if (singletonBeanMap.containsKey(beanName)) {
                 return singletonBeanMap.get(beanName);
             }
+            if (earlyBeanMap.containsKey(beanName)) {
+                return earlyBeanMap.get(beanName);
+            }
             Object beanObj = createBean(beanName, beanDefinition);
             singletonBeanMap.putIfAbsent(beanName, beanObj);
+            earlyBeanMap.remove(beanName);
             return beanObj;
         }
     }
@@ -139,6 +147,7 @@ public class ApplicationContext {
     private Object createBean(String beanName, BeanDefinition beanDefinition) {
         // 实例化 Bean
         Object instance = createBeanInstanceWithReflect(beanDefinition);
+        earlyBeanMap.putIfAbsent(beanName, instance);
 
         // 设置属性，IOC相关，依赖注入
         Class<?> cls = beanDefinition.getClazz();
