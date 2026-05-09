@@ -90,6 +90,12 @@ public class ApplicationContext {
         if (!beanDefinitionMap.containsKey(beanName)) {
             throw new BeanDefinitionNotExistsException(beanName);
         }
+        final BeanDefinition beanDefinition = beanDefinitionMap.get(beanName);
+
+        // 原型模式，直接新建Bean返回
+        if ("prototype".equalsIgnoreCase(beanDefinition.getScope())) {
+            return createBeanInstanceWithReflect(beanDefinition);
+        }
 
         // 双重校验锁，平衡单例模式并发性能
         if (singletonBeanMap.containsKey(beanName)) {
@@ -99,21 +105,24 @@ public class ApplicationContext {
             if (singletonBeanMap.containsKey(beanName)) {
                 return singletonBeanMap.get(beanName);
             }
-            // 不存在，则根据Bean定义，反射创建Bean对象，并放入单例对象池。
-            BeanDefinition beanDefinition = beanDefinitionMap.get(beanName);
-            Class<?> clazz = beanDefinition.getClazz();
-            Constructor<?> constructor;
-            Object beanObj;
-            try {
-                constructor = clazz.getDeclaredConstructor(null);
-                beanObj = constructor.newInstance();
-            } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
-                     NoSuchMethodException e) {
-                throw new RuntimeException(e);
-            }
+            Object beanObj = createBeanInstanceWithReflect(beanDefinition);
             singletonBeanMap.putIfAbsent(beanName, beanObj);
+            return beanObj;
         }
+    }
 
-        return singletonBeanMap.get(beanName);
+    private static Object createBeanInstanceWithReflect(BeanDefinition beanDefinition) {
+        // 不存在，则根据Bean定义，反射创建Bean对象，并放入单例对象池。
+        Class<?> clazz = beanDefinition.getClazz();
+        Constructor<?> constructor;
+        Object beanObj;
+        try {
+            constructor = clazz.getDeclaredConstructor(null);
+            beanObj = constructor.newInstance();
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
+                 NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
+        return beanObj;
     }
 }
