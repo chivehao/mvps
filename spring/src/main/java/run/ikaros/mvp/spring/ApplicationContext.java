@@ -82,7 +82,6 @@ public class ApplicationContext {
             beanDefinition.setScope(isPrototype ? "prototype" : "singleton");
             beanDefinitionMap.putIfAbsent(component.beanName(), beanDefinition);
         }
-        beanDefinitionMap.keySet().forEach(System.out::println);
 
     }
 
