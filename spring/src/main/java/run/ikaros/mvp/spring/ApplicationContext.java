@@ -136,16 +136,25 @@ public class ApplicationContext {
 
         // 特定的接口
         for (Class<?> clsInterface : cls.getInterfaces()) {
-            if (clsInterface != BeanNameAware.class) {
-                continue;
+            if (clsInterface == BeanNameAware.class) {
+                Method setBeanNameMethod;
+                try {
+                    setBeanNameMethod = clsInterface.getDeclaredMethod("setBeanName", String.class);
+                    setBeanNameMethod.setAccessible(true);
+                    setBeanNameMethod.invoke(instance, beanName);
+                } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
             }
-            Method setBeanNameMethod;
-            try {
-                setBeanNameMethod = clsInterface.getDeclaredMethod("setBeanName", String.class);
-                setBeanNameMethod.setAccessible(true);
-                setBeanNameMethod.invoke(instance, beanName);
-            } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
-                throw new RuntimeException(e);
+            if (clsInterface == InitializingBean.class) {
+                Method afterPropertiesSet;
+                try {
+                    afterPropertiesSet = clsInterface.getDeclaredMethod("afterPropertiesSet");
+                    afterPropertiesSet.setAccessible(true);
+                    afterPropertiesSet.invoke(instance);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
 
