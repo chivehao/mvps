@@ -9,6 +9,8 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -23,6 +25,11 @@ public class ApplicationContext {
      * 单例Bean缓存，也称为一级缓存，作用是存储单例Bean对象，和有效解决循环依赖的问题。
      */
     private final static Map<String, Object> singletonBeanMap = new ConcurrentHashMap<>();
+
+    /**
+     * Bean的后置处理器列表。
+     */
+    private final static List<BeanPostProcessor> beanPostProcessorList = new ArrayList<>();
 
     public ApplicationContext(Class<?> clazz) {
         this.clazz = clazz;
@@ -75,6 +82,19 @@ public class ApplicationContext {
             if (!loadClass.isAnnotationPresent(Component.class)) {
                continue;
             }
+
+            // 后置处理器直接反射实例化放到列表里去
+            if (BeanPostProcessor.class.isAssignableFrom(loadClass)) {
+                try {
+                    Constructor<?> constructor = loadClass.getDeclaredConstructor();
+                    BeanPostProcessor instance = (BeanPostProcessor) constructor.newInstance();
+                    beanPostProcessorList.add(instance);
+                } catch (NoSuchMethodException | InvocationTargetException | InstantiationException |
+                         IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
             Component component = loadClass.getDeclaredAnnotation(Component.class);
             boolean isPrototype = false;
             if (loadClass.isAnnotationPresent(Scope.class)) {
@@ -137,6 +157,11 @@ public class ApplicationContext {
             }
         }
 
+        //实例化之后，初始化之前操作
+        for (BeanPostProcessor beanPostProcessor : beanPostProcessorList) {
+            beanPostProcessor.postProcessBeforeInitialization(instance, beanName);
+        }
+
         //初始化相关，如特定的接口
         for (Class<?> clsInterface : cls.getInterfaces()) {
             if (BeanNameAware.class.isAssignableFrom(clsInterface)) {
@@ -159,6 +184,12 @@ public class ApplicationContext {
                     throw new RuntimeException(e);
                 }
             }
+        }
+
+
+        //实例化之后，初始化之后操作
+        for (BeanPostProcessor beanPostProcessor : beanPostProcessorList) {
+            beanPostProcessor.postProcessAfterInitialization(instance, beanName);
         }
 
         return instance;

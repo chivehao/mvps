@@ -7,13 +7,17 @@ import run.ikaros.mvp.spring.Component;
 public class CommonBeanPostProcessor implements BeanPostProcessor {
     @Override
     public Object postProcessBeforeInitialization(Object bean, String beanName) {
-        System.out.println("Exec CommonBeanPostProcessor postProcessBeforeInitialization.");
+        System.out.println("[CommonBeanPostProcessor]" +
+                '[' + beanName + ']' + ' '
+                + "exec postProcessBeforeInitialization.");
         return BeanPostProcessor.super.postProcessBeforeInitialization(bean, beanName);
     }
 
     @Override
     public Object postProcessAfterInitialization(Object bean, String beanName) {
-        System.out.println("Exec CommonBeanPostProcessor postProcessAfterInitialization.");
+        System.out.println("[CommonBeanPostProcessor]" +
+                '[' + beanName + ']' + ' '
+                + "exec postProcessAfterInitialization.");
         return BeanPostProcessor.super.postProcessAfterInitialization(bean, beanName);
     }
 }
