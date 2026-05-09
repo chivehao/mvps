@@ -157,32 +157,32 @@ public class ApplicationContext {
             }
         }
 
+        // Aware 相关接口
+        if (BeanNameAware.class.isAssignableFrom(cls)) {
+            Method setBeanNameMethod;
+            try {
+                setBeanNameMethod = cls.getDeclaredMethod("setBeanName", String.class);
+                setBeanNameMethod.setAccessible(true);
+                setBeanNameMethod.invoke(instance, beanName);
+            } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
         //实例化之后，初始化之前操作
         for (BeanPostProcessor beanPostProcessor : beanPostProcessorList) {
             beanPostProcessor.postProcessBeforeInitialization(instance, beanName);
         }
 
-        //初始化相关，如特定的接口
-        for (Class<?> clsInterface : cls.getInterfaces()) {
-            if (BeanNameAware.class.isAssignableFrom(clsInterface)) {
-                Method setBeanNameMethod;
-                try {
-                    setBeanNameMethod = clsInterface.getDeclaredMethod("setBeanName", String.class);
-                    setBeanNameMethod.setAccessible(true);
-                    setBeanNameMethod.invoke(instance, beanName);
-                } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-            if (InitializingBean.class.isAssignableFrom(clsInterface)) {
-                Method afterPropertiesSet;
-                try {
-                    afterPropertiesSet = clsInterface.getDeclaredMethod("afterPropertiesSet");
-                    afterPropertiesSet.setAccessible(true);
-                    afterPropertiesSet.invoke(instance);
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
+        //初始化，如 InitializingBean 等特定的接口
+        if (InitializingBean.class.isAssignableFrom(cls)) {
+            Method afterPropertiesSet;
+            try {
+                afterPropertiesSet = cls.getDeclaredMethod("afterPropertiesSet");
+                afterPropertiesSet.setAccessible(true);
+                afterPropertiesSet.invoke(instance);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
             }
         }
 
